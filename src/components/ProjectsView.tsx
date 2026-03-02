@@ -4,6 +4,11 @@ import { useState, useEffect, useCallback } from "react";
 import { ProjectCard } from "@/components/ProjectCard";
 import { ProjectModal } from "@/components/ProjectModal";
 
+interface Tag {
+  name: string;
+  color: string;
+}
+
 interface Project {
   id: string;
   name: string;
@@ -13,6 +18,8 @@ interface Project {
   githubUrl: string | null;
   liveUrl: string | null;
   order: number;
+  tags: Tag[];
+  status: string;
 }
 
 interface ProjectsViewProps {
@@ -28,6 +35,7 @@ export function ProjectsView({ initialProjects }: ProjectsViewProps) {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [projectContents, setProjectContents] = useState<Record<string, any[]>>({});
+  const [loadingProjects, setLoadingProjects] = useState<Set<string>>(new Set());
   const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
@@ -38,10 +46,36 @@ export function ProjectsView({ initialProjects }: ProjectsViewProps) {
   useEffect(() => {
     localStorage.setItem("theme", isDark ? "dark" : "light");
   }, [isDark]);
+  // 页面加载后后台预加载所有项目详情，点开时立即显示
+  useEffect(() => {
+    // 并行拉取所有项目详情
+    Promise.all(
+      initialProjects.map(async (project) => {
+        setLoadingProjects(prev => new Set(prev).add(project.id));
+        try {
+          const res = await fetch(`/api/project/${project.id}`);
+          const data = await res.json();
+          setProjectContents(prev => ({
+            ...prev,
+            [project.id]: data.blocks || []
+          }));
+        } catch {
+          // silent fail
+        } finally {
+          setLoadingProjects(prev => {
+            const next = new Set(prev);
+            next.delete(project.id);
+            return next;
+          });
+        }
+      })
+    );
+  }, [initialProjects]);
 
   const preloadProject = useCallback(async (projectId: string) => {
-    if (projectContents[projectId]) return;
+    if (projectContents[projectId] || loadingProjects.has(projectId)) return;
 
+    setLoadingProjects(prev => new Set(prev).add(projectId));
     try {
       const res = await fetch(`/api/project/${projectId}`);
       const data = await res.json();
@@ -51,8 +85,14 @@ export function ProjectsView({ initialProjects }: ProjectsViewProps) {
       }));
     } catch (error) {
       console.error(`Failed to preload project ${projectId}`);
+    } finally {
+      setLoadingProjects(prev => {
+        const next = new Set(prev);
+        next.delete(projectId);
+        return next;
+      });
     }
-  }, [projectContents]);
+  }, [projectContents, loadingProjects]);
 
   const getCategoryCount = (category: string) => {
     if (category === "ALL") return projects.length;
@@ -224,6 +264,7 @@ export function ProjectsView({ initialProjects }: ProjectsViewProps) {
         <ProjectModal
           project={selectedProject}
           pageContent={projectContents[selectedProject.id] || []}
+          isLoading={loadingProjects.has(selectedProject.id)}
           onClose={() => setSelectedProjectId(null)}
           isDark={isDark}
         />
