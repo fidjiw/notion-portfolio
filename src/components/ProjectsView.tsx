@@ -32,7 +32,7 @@ export function ProjectsView({ initialProjects }: ProjectsViewProps) {
   const [projects] = useState<Project[]>(initialProjects);
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [categories] = useState<string[]>(() => {
-    return Array.from(new Set(initialProjects.map((p) => p.category).filter(Boolean));
+    return Array.from(new Set(initialProjects.map((p) => p.category).filter(Boolean)));
   });
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
