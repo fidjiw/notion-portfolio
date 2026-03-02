@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 interface Tag {
   name: string;
@@ -202,8 +203,17 @@ export function ProjectModal({ project, pageContent, onClose, isDark, isLoading 
 
       case "image": {
         const url = content.type === "external" ? content.external?.url : content.file?.url;
+        const alt = content.caption?.[0]?.plain_text || "";
         return url ? (
-          <img src={url} alt={content.caption?.[0]?.plain_text || ""} className="rounded-lg mb-4 max-w-full" />
+          <div className="relative rounded-lg mb-4 w-full" style={{ minHeight: "200px" }}>
+            <Image
+              src={url}
+              alt={alt}
+              fill
+              className="object-contain"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          </div>
         ) : null;
       }
 

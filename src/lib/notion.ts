@@ -23,6 +23,8 @@ export interface Project {
   order: number;
   tags: Tag[];
   status: string;
+  createdTime: string;
+  lastEditedTime: string;
 }
 
 let projectsCache: { data: Project[]; timestamp: number } | null = null;
@@ -64,6 +66,8 @@ export async function getProjects(): Promise<Project[]> {
             color: t.color ?? "default",
           })),
           status: props.Status?.status?.name ?? props.Status?.select?.name ?? "",
+          createdTime: page.created_time,
+          lastEditedTime: page.last_edited_time,
         };
       })
       .filter((p) => p.name);

@@ -20,6 +20,8 @@ interface Project {
   order: number;
   tags: Tag[];
   status: string;
+  createdTime: string;
+  lastEditedTime: string;
 }
 
 interface ProjectsViewProps {
@@ -30,13 +32,14 @@ export function ProjectsView({ initialProjects }: ProjectsViewProps) {
   const [projects] = useState<Project[]>(initialProjects);
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [categories] = useState<string[]>(() => {
-    return Array.from(new Set(initialProjects.map((p) => p.category).filter(Boolean)));
+    return Array.from(new Set(initialProjects.map((p) => p.category).filter(Boolean));
   });
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [projectContents, setProjectContents] = useState<Record<string, any[]>>({});
   const [loadingProjects, setLoadingProjects] = useState<Set<string>>(new Set());
   const [isDark, setIsDark] = useState(true);
+  const [sortOption, setSortOption] = useState<"order" | "latest" | "hot">("order");
 
   useEffect(() => {
     const saved = localStorage.getItem("theme");
@@ -108,6 +111,17 @@ export function ProjectsView({ initialProjects }: ProjectsViewProps) {
         p.name.toLowerCase().includes(query) ||
         p.description.toLowerCase().includes(query)
       );
+    })
+    .sort((a, b) => {
+      switch (sortOption) {
+        case "latest":
+          return new Date(b.createdTime).getTime() - new Date(a.createdTime).getTime();
+        case "hot":
+          return new Date(b.lastEditedTime).getTime() - new Date(a.lastEditedTime).getTime();
+        case "order":
+        default:
+          return a.order - b.order;
+      }
     });
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
@@ -205,7 +219,7 @@ export function ProjectsView({ initialProjects }: ProjectsViewProps) {
         </div>
       </div>
 
-      <div className="max-w-[1400px] mx-auto mb-8">
+      <div className="max-w-[1400px] mx-auto mb-6 flex items-center justify-between">
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => setSelectedCategory("ALL")}
@@ -235,6 +249,20 @@ export function ProjectsView({ initialProjects }: ProjectsViewProps) {
             </button>
           ))}
         </div>
+
+        <select
+          value={sortOption}
+          onChange={(e) => setSortOption(e.target.value as "order" | "latest" | "hot")}
+          className={`px-3 py-1.5 rounded-lg text-sm border focus:outline-none ${
+            isDark
+              ? "bg-[#1a1a1a] border-[#333] text-[#aaa] focus:border-[#555]"
+              : "bg-white border-gray-300 text-gray-600 focus:border-gray-400"
+          }`}
+        >
+          <option value="order">默认顺序</option>
+          <option value="latest">最新创建</option>
+          <option value="hot">最近更新</option>
+        </select>
       </div>
 
       {filteredProjects.length === 0 ? (
