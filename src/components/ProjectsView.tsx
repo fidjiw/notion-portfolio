@@ -104,21 +104,47 @@ export function ProjectsView({ initialProjects }: ProjectsViewProps) {
 
   // 从 blocks 中提取可搜索文本
   const extractBlockText = (blocks: any[]): string => {
-    return blocks
-      .map((block) => {
-        const type = block.type;
-        const content = block[type];
-        if (!content) return "";
-        if (content.rich_text) {
-          return content.rich_text.map((rt: any) => rt.plain_text || "").join("");
-        }
-        if (content.caption) {
-          return content.caption.map((rt: any) => rt.plain_text || "").join("");
-        }
-        return "";
-      })
-      .join(" ")
-      .toLowerCase();
+    const extractRichText = (richText: any[]): string => {
+      if (!richText) return "";
+      return richText.map((rt: any) => rt.plain_text || "").join("");
+    };
+
+    const extractBlock = (block: any): string => {
+      const type = block.type;
+      const content = block[type];
+      if (!content) return "";
+
+      let text = "";
+
+      // 提取 rich_text
+      if (content.rich_text) {
+        text += extractRichText(content.rich_text) + " ";
+      }
+      // 提取 caption
+      if (content.caption) {
+        text += extractRichText(content.caption) + " ";
+      }
+
+      // 处理表格 - 提取所有行的单元格内容
+      if (type === "table" && block.children) {
+        block.children.forEach((row: any) => {
+          if (row.table_row?.cells) {
+            row.table_row.cells.forEach((cell: any[]) => {
+              text += extractRichText(cell) + " ";
+            });
+          }
+        });
+      }
+
+      // 递归处理子 blocks (toggle 等)
+      if (block.children) {
+        text += extractBlockText(block.children);
+      }
+
+      return text;
+    };
+
+    return blocks.map(extractBlock).join(" ").toLowerCase();
   };
 
   const filteredProjects = projects
