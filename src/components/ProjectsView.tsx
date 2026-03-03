@@ -102,14 +102,37 @@ export function ProjectsView({ initialProjects }: ProjectsViewProps) {
     return projects.filter((p) => p.category === category).length;
   };
 
+  // 从 blocks 中提取可搜索文本
+  const extractBlockText = (blocks: any[]): string => {
+    return blocks
+      .map((block) => {
+        const type = block.type;
+        const content = block[type];
+        if (!content) return "";
+        if (content.rich_text) {
+          return content.rich_text.map((rt: any) => rt.plain_text || "").join("");
+        }
+        if (content.caption) {
+          return content.caption.map((rt: any) => rt.plain_text || "").join("");
+        }
+        return "";
+      })
+      .join(" ")
+      .toLowerCase();
+  };
+
   const filteredProjects = projects
     .filter((p) => selectedCategory === "ALL" || p.category === selectedCategory)
     .filter((p) => {
       if (!searchQuery) return true;
       const query = searchQuery.toLowerCase();
+      // 搜索项目名称、描述、以及详情页内容
+      const detailContent = projectContents[p.id];
+      const detailText = detailContent ? extractBlockText(detailContent) : "";
       return (
         p.name.toLowerCase().includes(query) ||
-        p.description.toLowerCase().includes(query)
+        p.description.toLowerCase().includes(query) ||
+        detailText.includes(query)
       );
     })
     .sort((a, b) => {
