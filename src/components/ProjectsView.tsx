@@ -217,7 +217,7 @@ export function ProjectsView({ initialProjects }: ProjectsViewProps) {
         <div className="relative">
           <input
             type="text"
-            placeholder="搜索项目名称或描述..."
+            placeholder="搜索项目名称、描述或详情内容..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className={`w-full rounded-lg px-4 py-2.5 pl-10 focus:outline-none transition-colors ${
