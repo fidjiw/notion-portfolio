@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ProjectCard } from "@/components/ProjectCard";
 import { ProjectModal } from "@/components/ProjectModal";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 interface Tag {
   name: string;
@@ -320,17 +321,19 @@ export function ProjectsView({ initialProjects }: ProjectsViewProps) {
           <p>{searchQuery ? "未找到匹配的项目" : "暂无项目"}</p>
         </div>
       ) : (
-        <div className="max-w-[1400px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {filteredProjects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              onClick={() => setSelectedProjectId(project.id)}
-              onMouseEnter={() => preloadProject(project.id)}
-              isDark={isDark}
-            />
-          ))}
-        </div>
+        <ErrorBoundary isDark={isDark}>
+          <div className="max-w-[1400px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {filteredProjects.map((project) => (
+              <ProjectCard
+                key={project.id}
+                project={project}
+                onClick={() => setSelectedProjectId(project.id)}
+                onMouseEnter={() => preloadProject(project.id)}
+                isDark={isDark}
+              />
+            ))}
+          </div>
+        </ErrorBoundary>
       )}
 
       <footer className={`max-w-[1400px] mx-auto mt-16 text-center text-sm ${isDark ? "text-[#444]" : "text-gray-500"}`}>
@@ -338,13 +341,15 @@ export function ProjectsView({ initialProjects }: ProjectsViewProps) {
       </footer>
 
       {selectedProject && (
-        <ProjectModal
-          project={selectedProject}
-          pageContent={projectContents[selectedProject.id] || []}
-          isLoading={loadingProjects.has(selectedProject.id)}
-          onClose={() => setSelectedProjectId(null)}
-          isDark={isDark}
-        />
+        <ErrorBoundary isDark={isDark}>
+          <ProjectModal
+            project={selectedProject}
+            pageContent={projectContents[selectedProject.id] || []}
+            isLoading={loadingProjects.has(selectedProject.id)}
+            onClose={() => setSelectedProjectId(null)}
+            isDark={isDark}
+          />
+        </ErrorBoundary>
       )}
     </main>
   );
